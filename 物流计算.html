@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>物流费用计算器</title>
+    <style>
+      body {
+        font-family: 'Microsoft YaHei', sans-serif;
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+      }
+      .calculator {
+        border: 1px solid #ccc;
+        padding: 20px;
+        border-radius: 5px;
+      }
+      .input-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: inline-block;
+        width: 120px;
+      }
+      input,
+      select {
+        padding: 5px;
+        width: 200px;
+      }
+      button {
+        padding: 8px 15px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      #result {
+        margin-top: 15px;
+        font-weight: bold;
+        color: #d63232;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="calculator">
+      <h2>物流费用计算系统</h2>
+      <div class="input-group">
+        <label>目的省份：</label>
+        <select id="province">
+          <option value="湖北省">湖北省</option>
+          <option value="湖南省">湖南省</option>
+          <option value="甘肃省">甘肃省</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>收费方式：</label>
+        <select id="method">
+          <option value="对段收">对段收费</option>
+          <option value="分段收">分段收费</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>货物重量(kg)：</label>
+        <input type="number" id="weight" min="0.1" step="0.1" value="1" placeholder="请输入重量" />
+      </div>
+      <button onclick="calculate()">立即计算</button>
+      <div id="result"></div>
+    </div>
+
+    <script>
+      const provinceData = {
+        湖北省: {
+          对段收: {
+            首重价格: 10,
+            区间配置: [
+              { min: 1, max: 9, 单价: 7, 最低收费: 60 },
+              { min: 9, max: 200, 单价: 6, 最低收费: 240 },
+              { min: 200, max: 500, 单价: 4 },
+              { min: 500, max: 2000, 单价: 4 },
+              { min: 2000, max: Infinity, 单价: 6 }
+            ]
+          },
+          分段收: {
+            首重价格: 17,
+            分段配置: [
+              { min: 1, max: 9, 单价: 4 },
+              { min: 9, max: 200, 单价: 4 },
+              { min: 200, max: 500, 单价: 4 },
+              { min: 500, max: 2000, 单价: 1 },
+              { min: 2000, max: Infinity, 单价: 17 }
+            ]
+          }
+        },
+        湖南省: {
+          对段收: {
+            首重价格: 10,
+            区间配置: [
+              { min: 1, max: 9, 单价: 4, 最低收费: 60 },
+              { min: 9, max: 200, 单价: 4, 最低收费: 240 },
+              { min: 200, max: Infinity, 单价: 4 }
+            ]
+          },
+          分段收: {
+            首重价格: 17,
+            分段配置: [
+              { min: 1, max: 9, 单价: 4 },
+              { min: 9, max: 200, 单价: 4 },
+              { min: 200, max: 500, 单价: 1 }
+            ]
+          }
+        },
+        甘肃省: {
+          对段收: {
+            首重价格: 15,
+            区间配置: [
+              { min: 1, max: 50, 单价: 7 },
+              { min: 50, max: 100, 单价: 8 },
+              { min: 100, max: Infinity, 单价: 7 }
+            ]
+          },
+          分段收: {
+            首重价格: 10,
+            分段配置: [
+              { min: 1, max: 50, 单价: 7 },
+              { min: 50, max: 200, 单价: 8 },
+              { min: 200, max: Infinity, 单价: 7 }
+            ]
+          }
+        }
+      }
+
+      function 计算运费(省份, 收费方式, 重量) {
+        const 配置数据 = provinceData[省份]?.[收费方式]
+        if (!配置数据) throw new Error('无效的省份或收费方式')
+        if (重量 <= 0) throw new Error('重量必须大于0')
+
+        let 总费用 = 配置数据.首重价格
+        const 首重 = 1
+
+        if (收费方式 === '对段收') {
+          const 当前区间 =
+            配置数据.区间配置.find((区) => 重量 > 区.min && 重量 <= 区.max) ||
+            配置数据.区间配置.slice(-1)[0]
+          总费用 += (重量 - 首重) * 当前区间.单价
+
+          if (当前区间.最低收费 && 总费用 < 当前区间.最低收费) {
+            总费用 = 当前区间.最低收费
+          }
+        } else if (收费方式 === '分段收') {
+          let 剩余重量 = 重量 - 首重
+          for (const 分段 of 配置数据.分段配置) {
+            if (剩余重量 <= 0) break
+            const 段长 = 分段.max - 分段.min
+            const 计费重量 = Math.min(段长, 剩余重量)
+            总费用 += 计费重量 * 分段.单价
+            剩余重量 -= 计费重量
+          }
+        }
+
+        return 总费用
+      }
+
+      function calculate() {
+        try {
+          const 省份 = document.getElementById('province').value
+          const 收费方式 = document.getElementById('method').value
+          const 重量 = parseFloat(document.getElementById('weight').value)
+
+          const 运费 = 计算运费(省份, 收费方式, 重量)
+          document.getElementById('result').innerHTML = `计算完成！总运费：¥${运费.toFixed(2)}`
+        } catch (错误) {
+          document.getElementById('result').innerHTML = `错误：${错误.message}`
+        }
+      }
+    </script>
+  </body>
+</html>

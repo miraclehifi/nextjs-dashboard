@@ -1,7 +1,7 @@
-import { generateYAxis } from '@/app/lib/utils';
-import { CalendarIcon } from '@heroicons/react/24/outline';
-import { lusitana } from '@/app/ui/fonts';
-import { fetchRevenue } from '@/app/lib/data';
+import { generateYAxis } from '@/app/lib/utils'
+import { CalendarIcon } from '@heroicons/react/24/outline'
+import { lusitana } from '@/app/ui/fonts'
+import { fetchRevenue } from '@/app/lib/data'
 
 // This component is representational only.
 // For data visualization UI, check out:
@@ -10,20 +10,18 @@ import { fetchRevenue } from '@/app/lib/data';
 // https://airbnb.io/visx/
 
 export default async function RevenueChart() {
-  const chartHeight = 350;
+  const chartHeight = 350
   // NOTE: Uncomment this code in Chapter 7
-  const revenue = await fetchRevenue();
-  const { yAxisLabels, topLabel } = generateYAxis(revenue);
+  const revenue = await fetchRevenue()
+  const { yAxisLabels, topLabel } = generateYAxis(revenue)
 
   if (!revenue || revenue.length === 0) {
-    return <p className="mt-4 text-gray-400">No data available.</p>;
+    return <p className="mt-4 text-gray-400">No data available.</p>
   }
 
   return (
     <div className="w-full md:col-span-4">
-      <h2 className={`${lusitana.className} mb-4 text-xl md:text-2xl`}>
-        Recent Revenue
-      </h2>
+      <h2 className={`${lusitana.className} mb-4 text-xl md:text-2xl`}>Recent Revenue</h2>
       {/* NOTE: Uncomment this code in Chapter 7 */}
 
       <div className="rounded-xl bg-gray-50 p-4">
@@ -42,12 +40,10 @@ export default async function RevenueChart() {
               <div
                 className="w-full rounded-md bg-blue-300"
                 style={{
-                  height: `${(chartHeight / topLabel) * month.revenue}px`,
+                  height: `${(chartHeight / topLabel) * month.revenue}px`
                 }}
               ></div>
-              <p className="-rotate-90 text-sm text-gray-400 sm:rotate-0">
-                {month.month}
-              </p>
+              <p className="-rotate-90 text-sm text-gray-400 sm:rotate-0">{month.month}</p>
             </div>
           ))}
         </div>
@@ -57,5 +53,5 @@ export default async function RevenueChart() {
         </div>
       </div>
     </div>
-  );
+  )
 }
